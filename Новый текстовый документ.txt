@@ -1,0 +1,120 @@
+use mydb;
+SELECT * FROM authors;
+
+SELECT surname, name 
+FROM authors 
+LIMIT 3;
+
+
+SELECT DISTINCT Country 
+FROM authors 
+ORDER BY Country;
+
+SELECT bookId, title, '5%' AS Discount, ROUND(price * 0.95, 2) AS priceDiscount
+FROM books;
+
+SELECT title, price,
+CASE 
+	WHEN price <=100 THEN 'Нищенские'
+    WHEN < 1000 THEN 'Между хлебом с водой и золотом в жопе'
+    ELSE 'Слишком дорогие для тебя'
+END AS CategoryPrice
+FROM books
+ORDER By price DESC
+
+SELECT login, name, surname, numberPhone FROM customers
+WHERE numberPhone IS NOT NULL
+
+SELECT title FROM books WHERE title LIKE '%авп%'
+
+SELECT MIN(price) AS minimalPrice, MAX(price) AS maximumPrice, AVG(price) AS avgPrice
+FROM books;
+
+SELECT authorId, title, COUNT(*) AS Count
+FROM books
+GROUP BY authorId, title;
+
+SELECT country, COUNT(*) AS authorCount
+FROM authors
+GROUP BY country
+HAVING COUNT(*) > 1;
+
+/* 4 ЛАБА*/
+SELECT ath.surname, ath.name, bks.title, bks.price
+FROM authors ath INNER JOIN books bks ON ath.authorId = bks.authorId
+WHERE ath.country = 'Россия';
+
+SELECT ath.surname, ath.name, COUNT(bks.bookId) as countBook
+FROM authors ath
+LEFT JOIN books bks ON ath.authorId = bks.authorId
+GROUP BY ath.authorId, ath.surname, ath.name
+ORDER BY countBook DESC;
+
+SELECT surname, name FROM authors
+WHERE authorId NOT IN (
+	SELECT authorId
+    FROM books
+    WHERE lower(title) LIKE '%linux%' OR lower(title) LIKE '%windows%'
+);
+
+SELECT custom.login, COUNT(DISTINCT ord.orderId) as CountOrders, SUM(arr.com_count) 
+AS countBooks, SUM(bks.price * arr.com_count) AS totalPrice
+FROM customers custom
+LEFT JOIN orders ord ON custom.customerId = ord.orderId
+LEFT JOIN compound arr ON ord.orderId = arr.orderId
+LEFT JOIN books bks ON arr.bookId = bks.bookId
+GROUP BY custom.login;
+
+SELECT custom.login AS login, COUNT(DISTINCT ord.orderId) AS countOrder,
+SUM(arr.com_count) AS countBuyBook
+FROM customers custom
+LEFT JOIN orders ord ON custom.customerId = ord.customerId
+LEFT JOIN compound arr ON ord.orderId = arr.orderId
+GROUP BY custom.login
+HAVING SUM(arr.com_count) > 10;
+
+
+
+
+
+/* 5 ЛАБА */
+SET SQL_SAFE_UPDATES = 0;
+
+INSERT INTO tempbooks
+SELECT ath.name AS athor_name, ath.surname AS surname, bks.title, bks.price 
+FROM authors ath
+INNER JOIN books bks ON ath.authorId = bks.authorId;
+
+
+DELETE FROM tempbooks WHERE title LIKE '%компьютер%';
+
+SELECT * FROM tempbooks;
+
+UPDATE tempbooks
+SET price = CASE 
+	WHEN surnameAuthor = 'Большой' THEN price/2
+    WHEN surnameAuthor = 'Порог' THEN price + 50
+    ELSE price
+END;
+
+DELETE FROM tempbooks;
+
+UPDATE tempbooks
+SET price = price + 100
+WHERE surnameAuthor IN ( 'Большой', 'Маленький' );
+
+SELECT * FROM tempbooks;
+
+DELETE FROM customers
+WHERE customerId NOT IN (
+	SELECT customerID
+    FROM orders
+);
+SELECT * FROM orders;
+
+REPLACE INTO authors(surname, name, country) VALUES ('Горный', 'Козел', 'россия');
+
+INSERT INTO authors(surname, name, country) VALUES ('Горный', 'Козел', 'россия')
+ON DUPLICATE KEY UPDATE country = VALUES(country);
+
+SET SQL_SAFE_UPDATES = 1;
